@@ -2,4 +2,4 @@
 Test task from #opencv IRC channel
 
 ##Info
-Main task it to find all red ellipses.
+Main task it to find all red ellipses. Some advanced features are welcome.
