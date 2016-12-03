@@ -62,3 +62,22 @@ void DrawRRect(cv::RotatedRect r_rect, cv::Mat& img, cv::Scalar color = cv::Scal
 
 cv::Mat Binarize(cv::Mat img);
 cv::Scalar RandomColor(cv::RNG& rng);
+
+Obj2d RotateObj(Obj2d& obj, double angle);
+
+// I think OpenCV need this
+template<class t1, class t2> cv::Point_<t1> operator-(cv::Point_<t1> p1, cv::Point_<t2> p2);
+template<class t1, class t2> cv::Point_<t1>& operator-=(cv::Point_<t1>& p1, cv::Point_<t2> p2);
+template<class t1, class t2> cv::Point_<t1> operator+(cv::Point_<t1> p1, cv::Point_<t2> p2);
+template<class t1, class t2> cv::Point_<t1>& operator+=(cv::Point_<t1>& p1, cv::Point_<t2> p2);
+template<class t1, class t2> cv::Point_<t1> operator-(cv::Point_<t1> p1, t2 scalar);
+template<class t1, class t2> cv::Point_<t1>& operator-=(cv::Point_<t1>& p1, t2 scalar);
+template<class t1, class t2> cv::Point_<t1> operator+(cv::Point_<t1> p1, t2 scalar);
+template<class t1, class t2> cv::Point_<t1>& operator+=(cv::Point_<t1>& p1, t2 scalar);
+template<class t1, class t2> cv::Point_<t1>& operator*(cv::Point_<t1> p1, t2 scalar);
+template<class t1, class t2> cv::Point_<t1>& operator*=(cv::Point_<t1>& p1, t2 scalar);
+template<class t1> cv::Point_<t1> operator-(cv::Point_<t1> p1);
+
+double VSymmetry(cv::Mat img);
+double HSymmetry(cv::Mat img);
+double VHSymmetry(cv::Mat img);

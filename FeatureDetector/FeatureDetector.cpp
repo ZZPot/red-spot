@@ -179,3 +179,117 @@ cv::Scalar RandomColor(cv::RNG& rng)
 	int color = (unsigned)rng;
 	return cv::Scalar(color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF);
 }
+Obj2d RotateObj(Obj2d& obj, double angle)
+{
+	float diag = sqrt(pow(obj.rect.width, 2) + pow(obj.rect.height, 2));
+	cv::Size field_size(diag*2, diag*2);
+	cv::Point offset(0,0);
+	offset -= obj.r_rect.center - diag; 
+	cv::Mat obj_field(field_size, CV_8UC1, cv::Scalar(0));
+	DrawContours(obj.contours, {cv::Scalar(255)}, obj_field, offset);
+	cv::Point2f rot_center = obj.r_rect.center - obj.rect.tl() + diag;
+	cv::Mat rot_mat = cv::getRotationMatrix2D(rot_center, angle, 1);
+	cv::warpAffine(obj_field, obj_field, rot_mat, field_size);
+	std::vector<Obj2d> res = FindObjects(obj_field, std::vector<type_condition>(),  std::vector<int>(), cv::RETR_EXTERNAL);
+	return res[0];
+}
+#pragma region cv::Point_ OPERATORS
+template<class t1, class t2> cv::Point_<t1> operator-(cv::Point_<t1> p1, cv::Point_<t2> p2)
+{
+	p1.x -= p2.x;
+	p1.y -= p2.y;
+	return p1;
+}
+template<class t1, class t2> cv::Point_<t1>& operator-=(cv::Point_<t1>& p1, cv::Point_<t2> p2)
+{
+	p1.x -= p2.x;
+	p1.y -= p2.y;
+	return p1;
+}
+template<class t1, class t2> cv::Point_<t1> operator+(cv::Point_<t1> p1, cv::Point_<t2> p2)
+{
+	p1.x += p2.x;
+	p1.y += p2.y;
+	return p1;
+}
+template<class t1, class t2> cv::Point_<t1>& operator+=(cv::Point_<t1>& p1, cv::Point_<t2> p2)
+{
+	p1.x += p2.x;
+	p1.y += p2.y;
+	return p1;
+}
+template<class t1, class t2> cv::Point_<t1> operator-(cv::Point_<t1> p1, t2 scalar)
+{
+	p1.x -= scalar;
+	p1.y -= scalar;
+	return p1;
+}
+template<class t1, class t2> cv::Point_<t1>& operator-=(cv::Point_<t1>& p1, t2 scalar)
+{
+	p1.x -= scalar;
+	p1.y -= scalar;
+	return p1;
+}
+template<class t1, class t2> cv::Point_<t1> operator+(cv::Point_<t1> p1, t2 scalar)
+{
+	p1.x += scalar;
+	p1.y += scalar;
+	return p1;
+}
+template<class t1, class t2> cv::Point_<t1>& operator+=(cv::Point_<t1>& p1, t2 scalar)
+{
+	p1.x += scalar;
+	p1.y += scalar;
+	return p1;
+}
+template<class t1, class t2> cv::Point_<t1>& operator*(cv::Point_<t1> p1, t2 scalar)
+{
+	p1.x *= scalar;
+	p1.y *= scalar;
+	return p1;
+}
+template<class t1, class t2> cv::Point_<t1>& operator*=(cv::Point_<t1>& p1, t2 scalar)
+{
+	p1.x *= scalar;
+	p1.y *= scalar;
+	return p1;
+}
+template<class t1> cv::Point_<t1> operator-(cv::Point_<t1> p1)
+{
+	p1.x *= -1;
+	p1.y *= -1;
+	return p1;
+}
+#pragma endregion
+double VSymmetry(cv::Mat img)
+{
+	if(img.rows < 2)
+		return 0;
+	int rows = img.rows/2;
+	cv::Mat top_half = img.rowRange(0, rows).clone();
+	cv::Mat bottom_half = img.rowRange(img.rows - rows, img.rows).clone();
+	cv::flip(bottom_half, bottom_half, 0);
+	cv::Mat diff;
+	cv::absdiff(top_half, bottom_half, diff);
+	cv::Scalar diff_sum = cv::sum(diff);
+	cv::Scalar img_sum = cv::sum(img);
+	return diff_sum[0]/img_sum[0]*2;
+}
+double HSymmetry(cv::Mat img)
+{
+	if(img.cols < 2)
+		return 0;
+	int cols = img.rows/2;
+	cv::Mat left_half = img.colRange(0, cols).clone();
+	cv::Mat right_half = img.colRange(img.cols - cols, img.cols).clone();
+	cv::flip(right_half, right_half, 1);
+	cv::Mat diff;
+	cv::absdiff(left_half, right_half, diff);
+	cv::Scalar diff_sum = cv::sum(diff);
+	cv::Scalar img_sum = cv::sum(img);
+	return diff_sum[0]/img_sum[0]*2;
+}
+double VHSymmetry(cv::Mat img) // VHS symmetry, lol
+{
+	return (VSymmetry(img) + HSymmetry(img))/2;
+}

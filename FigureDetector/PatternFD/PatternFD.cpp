@@ -10,6 +10,8 @@ figure_type pattern_fd::Predict(Obj2d& obj)
 	cv::Point offset = new_obj.rect.tl();
 	offset *= -1;
 	DrawContours(new_obj.contours, {cv::Scalar(255)}, obj_field, offset);
+	if(VHSymmetry(obj_field) >= SYMMETRY_DIFFERENCE)
+		return FT_UNKNOWN;
 	if(GetPatDiff(obj_field, FT_RECT) <= SQUARE_DIFFERENCE)
 		return FT_RECT;
 	if(GetPatDiff(obj_field, FT_ELLIPSE) <= SQUARE_DIFFERENCE)
@@ -42,86 +44,4 @@ double GetPatDiff(cv::Mat img, figure_type ft)
 	cv::absdiff(pat, img, diff);
 	cv::Scalar diff_sum = cv::sum(diff);
 	return diff_sum[0] / pat_sum[0];
-}
-Obj2d RotateObj(Obj2d& obj, double angle)
-{
-	float diag = sqrt(pow(obj.rect.width, 2) + pow(obj.rect.height, 2));
-	cv::Size field_size(diag*2, diag*2);
-	cv::Point offset(0,0);
-	offset -= obj.r_rect.center - diag; 
-	cv::Mat obj_field(field_size, CV_8UC1, cv::Scalar(0));
-	DrawContours(obj.contours, {cv::Scalar(255)}, obj_field, offset);
-	cv::Point2f rot_center = obj.r_rect.center - obj.rect.tl() + diag;
-	cv::Mat rot_mat = cv::getRotationMatrix2D(rot_center, angle, 1);
-	cv::warpAffine(obj_field, obj_field, rot_mat, field_size);
-	std::vector<Obj2d> res = FindObjects(obj_field, std::vector<type_condition>(),  std::vector<int>(), cv::RETR_EXTERNAL);
-	return res[0];
-}
-
-
-template<class t1, class t2> cv::Point_<t1> operator-(cv::Point_<t1> p1, cv::Point_<t2> p2)
-{
-	p1.x -= p2.x;
-	p1.y -= p2.y;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1>& operator-=(cv::Point_<t1>& p1, cv::Point_<t2> p2)
-{
-	p1.x -= p2.x;
-	p1.y -= p2.y;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1> operator+(cv::Point_<t1> p1, cv::Point_<t2> p2)
-{
-	p1.x += p2.x;
-	p1.y += p2.y;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1>& operator+=(cv::Point_<t1>& p1, cv::Point_<t2> p2)
-{
-	p1.x += p2.x;
-	p1.y += p2.y;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1> operator-(cv::Point_<t1> p1, t2 scalar)
-{
-	p1.x -= scalar;
-	p1.y -= scalar;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1>& operator-=(cv::Point_<t1>& p1, t2 scalar)
-{
-	p1.x -= scalar;
-	p1.y -= scalar;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1> operator+(cv::Point_<t1> p1, t2 scalar)
-{
-	p1.x += scalar;
-	p1.y += scalar;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1>& operator+=(cv::Point_<t1>& p1, t2 scalar)
-{
-	p1.x += scalar;
-	p1.y += scalar;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1>& operator*(cv::Point_<t1> p1, t2 scalar)
-{
-	p1.x *= scalar;
-	p1.y *= scalar;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1>& operator*=(cv::Point_<t1>& p1, t2 scalar)
-{
-	p1.x *= scalar;
-	p1.y *= scalar;
-	return p1;
-}
-template<class t1> cv::Point_<t1> operator-(cv::Point_<t1> p1)
-{
-	p1.x *= -1;
-	p1.y *= -1;
-	return p1;
 }
