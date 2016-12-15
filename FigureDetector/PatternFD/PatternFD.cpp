@@ -1,4 +1,5 @@
 #include "PatternFD.h"
+#include "../../common/common.hpp"
 #include <opencv2/imgproc.hpp>
 
 

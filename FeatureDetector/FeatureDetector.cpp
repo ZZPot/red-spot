@@ -1,8 +1,9 @@
 #include "FeatureDetector.h"
 #include <opencv2/imgproc.hpp>
+#include "../common/common.hpp"
 
 #pragma warning(disable: 4244 4267 4018)
-//#define BIN_DIFF
+#define BIN_DIFF
 bool CheckFeatures(Obj2d* obj, type_condition condition, int features_to_check)
 {
 	bool res = true;
@@ -22,6 +23,11 @@ bool CheckFeatures(Obj2d* obj, type_condition condition, int features_to_check)
 	if(features_to_check & FEATURE_CHECK_SQUARE_RATIO)
 		if(!(condition.square_ratio[0] <= square_ratio) || !(square_ratio <= condition.square_ratio[1]))
 			res = false;
+	double bounding_size_ratio = (double)obj->rect.height/obj->rect.width;
+	if(features_to_check & FEATURE_CHECK_BOUNDING_SIZE_RATIO)
+		if(	!(condition.bounding_size_ratio[0] <= bounding_size_ratio) ||
+			!(bounding_size_ratio <= condition.bounding_size_ratio[1]))
+			res = false;
 	// need to add new checks
 	return res;
 }
@@ -34,13 +40,14 @@ void GetObj2d(Obj2d* obj)
 	DrawContours(obj->contours, colors, img, cv::Point(-obj->rect.x, -obj->rect.y));
 	obj->square = countNonZero(img);
 }
-std::vector<Obj2d> FindObjects(cv::Mat img, std::vector<type_condition> conditions, std::vector<int> features_to_check, int mode, int level_limit)
+std::vector<Obj2d> FindObjects(cv::Mat img, std::vector<type_condition> conditions, std::vector<int> features_to_check, int mode, int level_limit, cv::Point offset)
 {
 	std::vector<Obj2d> res;
 	std::vector<contour_type> contours;
 	std::vector<cv::Vec4i> hierarchy;
-	cv::findContours(img, contours, hierarchy, mode, cv::CHAIN_APPROX_SIMPLE);
-	
+	cv::Mat img_1px;
+	cv::copyMakeBorder(img, img_1px, 1, 1, 1, 1, cv::BORDER_CONSTANT, cv::Scalar(0));
+	cv::findContours(img_1px, contours, hierarchy, mode, cv::CHAIN_APPROX_SIMPLE, offset + cv::Point(-1, -1));
 	if(level_limit < 0)
 		level_limit = INT_MAX;
 	std::set<unsigned> banished;
@@ -53,6 +60,12 @@ std::vector<Obj2d> FindObjects(cv::Mat img, std::vector<type_condition> conditio
 		Obj2d temp_obj;
 		temp_obj.contours = GetContours(GetContours(hierarchy, i), contours);
 		GetObj2d(&temp_obj);
+		if(!conditions.size() || !conditions.size())
+		{
+			temp_obj.tag = -1;
+			res.push_back(temp_obj);
+		}
+		else
 		for(unsigned j = 0; j < conditions.size(); j++)
 			if(CheckFeatures(&temp_obj, conditions[j], features_to_check[j % features_to_check.size()]))
 			{
@@ -60,13 +73,7 @@ std::vector<Obj2d> FindObjects(cv::Mat img, std::vector<type_condition> conditio
 				res.push_back(temp_obj);
 				BanishContour(banished, hierarchy, i);
 				break;
-			}
-		if(!conditions.size())
-		{
-			temp_obj.tag = -1;
-			res.push_back(temp_obj);
-			BanishContour(banished, hierarchy, i);
-		}
+			}		
 	}
 	return res;
 }
@@ -193,74 +200,7 @@ Obj2d RotateObj(Obj2d& obj, double angle)
 	std::vector<Obj2d> res = FindObjects(obj_field, std::vector<type_condition>(),  std::vector<int>(), cv::RETR_EXTERNAL);
 	return res[0];
 }
-#pragma region cv::Point_ OPERATORS
-template<class t1, class t2> cv::Point_<t1> operator-(cv::Point_<t1> p1, cv::Point_<t2> p2)
-{
-	p1.x -= p2.x;
-	p1.y -= p2.y;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1>& operator-=(cv::Point_<t1>& p1, cv::Point_<t2> p2)
-{
-	p1.x -= p2.x;
-	p1.y -= p2.y;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1> operator+(cv::Point_<t1> p1, cv::Point_<t2> p2)
-{
-	p1.x += p2.x;
-	p1.y += p2.y;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1>& operator+=(cv::Point_<t1>& p1, cv::Point_<t2> p2)
-{
-	p1.x += p2.x;
-	p1.y += p2.y;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1> operator-(cv::Point_<t1> p1, t2 scalar)
-{
-	p1.x -= scalar;
-	p1.y -= scalar;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1>& operator-=(cv::Point_<t1>& p1, t2 scalar)
-{
-	p1.x -= scalar;
-	p1.y -= scalar;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1> operator+(cv::Point_<t1> p1, t2 scalar)
-{
-	p1.x += scalar;
-	p1.y += scalar;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1>& operator+=(cv::Point_<t1>& p1, t2 scalar)
-{
-	p1.x += scalar;
-	p1.y += scalar;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1>& operator*(cv::Point_<t1> p1, t2 scalar)
-{
-	p1.x *= scalar;
-	p1.y *= scalar;
-	return p1;
-}
-template<class t1, class t2> cv::Point_<t1>& operator*=(cv::Point_<t1>& p1, t2 scalar)
-{
-	p1.x *= scalar;
-	p1.y *= scalar;
-	return p1;
-}
-template<class t1> cv::Point_<t1> operator-(cv::Point_<t1> p1)
-{
-	p1.x *= -1;
-	p1.y *= -1;
-	return p1;
-}
-#pragma endregion
+
 double VSymmetry(cv::Mat img)
 {
 	if(img.rows < 2)
