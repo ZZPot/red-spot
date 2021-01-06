@@ -1,5 +1,6 @@
 #include "PatternFD.h"
-#include "../../common/common.hpp"
+#include "OpenCV_common.hpp"
+#include "FeatureDetector/Draw/DrawDebug.h"
 #include <opencv2/imgproc.hpp>
 
 
@@ -10,7 +11,7 @@ figure_type pattern_fd::Predict(Obj2d& obj)
 	cv::Mat obj_field(new_obj.rect.size(), CV_8UC1, cv::Scalar(0));
 	cv::Point offset = new_obj.rect.tl();
 	offset *= -1;
-	DrawContours(new_obj.contours, {cv::Scalar(255)}, obj_field, offset);
+	DrawContours(new_obj.contours, {cv::Scalar(255)}, obj_field, offset, 1, cv::FILLED);
 	if(VHSymmetry(obj_field) >= SYMMETRY_DIFFERENCE)
 		return FT_UNKNOWN;
 	if(GetPatDiff(obj_field, FT_RECT) <= SQUARE_DIFFERENCE)

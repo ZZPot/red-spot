@@ -1,5 +1,5 @@
 #pragma once
-#include "../FeatureDetector/FeatureDetector.h"
+#include "FeatureDetector/FeatureDetector.h"
 
 enum figure_type
 {
